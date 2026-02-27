@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Woltac</title>
+    <link rel="stylesheet" href="/index.css">
+    <script src="/work-admin/index.js"></script>
+</head>
+<body class="view">
+    <div class="main-box">
+        <div class="input-name-wolt">
+            <h1 class="inc-name">
+                Введите имя курьера
+            </h1>
+            <form action="/datasub", method="post">
+                <input class="inpl"  name="info" type="text">
+                <button class="btn-row" id="start" type="submit">запустить</button>
+            </form>
+        </div>
+        </div>
+    </div>
+    <div class="result-box">
+        <div class="final-result">
+            <h1>Результат</h1>
+            <ul class="cour-row">
+                <li>имя курьера: <b><%= name %></b></li>
+                <li>кол-во заказов: <b><%= dilcount %></b></li>
+                <li>дата регистрации: <b><%= datareg  %></b></li>
+            </ul>
+            <form action="/cleardata", method="post">
+                <input class="inpl" name="refresh" type="text">
+                <button class="btn-row" type="submit">очистить</button>
+            </form>
+            <p><i>напишите "очистить" что бы освободить базу данных</i></p>
+            <p class="p1"><i><%= alertinfo %></i></p>
+        </div>
+    </div>
+</body>
+</html>

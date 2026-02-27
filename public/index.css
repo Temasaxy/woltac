@@ -1,0 +1,80 @@
+.view{
+    margin: 0%;
+    padding: 0%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(0, 0, 0);
+}
+.main-box{
+    width: 300px;
+    height: 500px;
+    margin-top: 300px;
+    margin-right: 100px;
+    padding: 20px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 40px;
+    background-color: aliceblue;
+    color: rgb(0, 0, 0);
+    border: 2px, solid, white;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow';
+    transition: 0.3s;
+}
+.main-box:hover{
+    box-shadow: 2px 2px 30px white;
+    scale: calc(1.10);
+}
+.result-box{
+    width: 300px;
+    height: 500px;
+    margin-top: 300px;
+    padding: 20px;
+    border-radius: 40px;
+    background-color: aliceblue;
+    color: rgb(0, 0, 0);
+    text-align: center;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow';
+    border: 2px, solid, white;
+    transition: 0.3s;
+}
+.result-box:hover{
+    box-shadow: 2px 2px 30px rgb(85, 223, 110);
+    scale: calc(1.10);
+}
+.inc-name{
+    margin-bottom: 90px;
+}
+.inpl{
+    outline: none;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow';
+    padding: 10px;
+    font-size: medium;
+    border-radius: 999px;
+    border: none;
+    transition: 0.4s;
+}
+.inpl:focus{
+    background-color: rgb(218, 219, 219);
+    border: none;
+    scale: calc(1.10);
+    transition: 0.4s;
+}
+.btn-row{
+    width: 150px;
+    height: 50px;
+    margin: 40px;
+    border: none;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow';
+    border-radius: 999px;
+    transition: 0.3s;
+}
+.btn-row:hover{
+    background-color: rgb(85, 223, 110);
+    scale: calc(1.08);
+}
+.p1{
+    color: red;
+}
