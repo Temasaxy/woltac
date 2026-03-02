@@ -83,7 +83,10 @@ async function runBot(imname) {
         const isVercel = process.env.VERCEL;
 
         const options = {
-            args: isVercel ? chromium.args : ['--no-sandbox', '--disable-setuid-sandbox'],
+            args: isVercel ? [
+        ...chromium.args,
+        '--disable-blink-features=AutomationControlled', // Скрывает Puppeteer
+        ] : ['--no-sandbox'],
             defaultViewport: chromium.defaultViewport,
             // Если на Vercel - берем путь из библиотеки, если дома - путь к твоему Chrome
             executablePath: isVercel 
@@ -96,7 +99,11 @@ async function runBot(imname) {
         browser = await puppeteer.launch(options);
 
         page = await browser.newPage();
-        await page.goto('https://delivery-os.wolt.com/couriers', { waitUntil: 'networkidle2' });
+        await page.goto('https://delivery-os.wolt.com/couriers', { 
+        waitUntil: 'networkidle0', 
+        timeout: 60000 
+        });
+        
         await page.waitForSelector('tbody', {timeout:30000})
         let names = await page.$$eval('tbody > tr > td:nth-child(2) > div > div', e => {return e.map((el) => el.innerText)});
         let count = 0
