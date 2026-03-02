@@ -64,6 +64,7 @@ app.listen(port, () => {
     console.log(`Server connect: http://localhost:${port}`);
 });
 async function runBot(imname) {
+    console.log(imname)
     if (!imname) return ['error', 'error', 'error'];
 
     // ЛОГИКА СЕССИИ ДЛЯ VERCEL
@@ -87,7 +88,7 @@ async function runBot(imname) {
             executablePath: isVercel 
                 ? await chromium.executablePath() 
                 : 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', 
-            headless: isVercel ? chromium.headless : true, // Дома лучше false, чтобы видеть окно
+            headless: isVercel ? chromium.headless : false, // Дома лучше false, чтобы видеть окно
             userDataDir: targetDir,
         };
 
@@ -100,6 +101,7 @@ async function runBot(imname) {
         await page.waitForSelector('.cb_DataTable_Row_2be', { timeout: 15000 });
         
         let names = await page.$$eval('.cb_DataTable_Row_2be > .cb_DataTable_Column_2be:nth-child(2) > div > div > div:nth-child(1)', e => {return e.map((el) => el.innerText)});
+        console.log(names)
         let count = 0
         let page_max_string = await page.$eval('footer > div > div > button:nth-child(2)', e => e.getAttribute('title'))
         let page_max_num = Number(page_max_string.slice(10))
