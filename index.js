@@ -98,7 +98,7 @@ async function runBot(imname) {
         await page.goto('https://delivery-os.wolt.com/couriers', { waitUntil: 'networkidle2' });
         
         // Твоя логика парсинга (оставляем как есть)
-        await page.waitForSelector('.cb_DataTable_Row_2be', { timeout: 15000 });
+        await page.waitForSelector('.cb_DataTable_Row_2be', { timeout: 30000 });
         
         let names = await page.$$eval('.cb_DataTable_Row_2be > .cb_DataTable_Column_2be:nth-child(2) > div > div > div:nth-child(1)', e => {return e.map((el) => el.innerText)});
         console.log(names)
@@ -135,6 +135,7 @@ async function runBot(imname) {
         return [count_delivery, data_c, imname]
 
     } catch (error) {
+        console.log(await page.content())
         console.error('Ошибка бота:', error);
         if (browser) await browser.close();
         return ['error', 'error', 'error'];
