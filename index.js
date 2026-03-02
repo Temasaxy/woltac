@@ -77,6 +77,7 @@ async function runBot(imname) {
     }
 
     let browser;
+    let page;
     try {
         // Проверяем, запущен ли код на сервере Vercel
         const isVercel = process.env.VERCEL;
@@ -129,6 +130,7 @@ async function runBot(imname) {
         return [count_delivery, data_c, imname]
 
     } catch (error) {
+        console.log(await page.content())
         console.error('Ошибка бота:', error);
         if (browser) await browser.close();
         return ['error', 'error', 'error'];
