@@ -13,7 +13,7 @@ let db = new Map
 const app = express()
 
 app.set('view engine', 'ejs')
-app.set('views', './temp')
+app.set('views', path.join(__dirname, 'temp'));
 app.use(express.static('public'))
 app.use(express.urlencoded({ extended: true }))
 
