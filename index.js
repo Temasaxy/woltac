@@ -129,7 +129,6 @@ async function runBot(imname) {
         return [count_delivery, data_c, imname]
 
     } catch (error) {
-        console.log(await page.content())
         console.error('Ошибка бота:', error);
         if (browser) await browser.close();
         return ['error', 'error', 'error'];
