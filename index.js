@@ -77,13 +77,21 @@ async function runBot(imname) {
 
     let browser;
     try {
-        browser = await puppeteer.launch({
-            args: chromium.args,
+        // Проверяем, запущен ли код на сервере Vercel
+        const isVercel = process.env.VERCEL;
+
+        const options = {
+            args: isVercel ? chromium.args : ['--no-sandbox', '--disable-setuid-sandbox'],
             defaultViewport: chromium.defaultViewport,
-            executablePath: await chromium.executablePath(), // Авто-путь на Vercel
-            headless: chromium.headless,
-            userDataDir: targetDir, // Работаем с копией в /tmp
-        });
+            // Если на Vercel - берем путь из библиотеки, если дома - путь к твоему Chrome
+            executablePath: isVercel 
+                ? await chromium.executablePath() 
+                : 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', 
+            headless: isVercel ? chromium.headless : false, // Дома лучше false, чтобы видеть окно
+            userDataDir: targetDir,
+        };
+
+        browser = await puppeteer.launch(options);
 
         const page = await browser.newPage();
         await page.goto('https://delivery-os.wolt.com/couriers', { waitUntil: 'networkidle2' });
