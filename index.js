@@ -5,6 +5,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs-extra';
 import os from 'os';
+import { Redis } from '@upstash/redis';
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -70,6 +76,11 @@ async function runBot(imname) {
     // ЛОГИКА СЕССИИ ДЛЯ VERCEL
     const sourceDir = path.join(__dirname, 'my_bot_session');
     const targetDir = path.join(os.tmpdir(), 'browser_session');
+    if (fs.existsSync(sourceDir)) {
+        await fs.copy(sourceDir, targetDir);
+        const files = fs.readdirSync(targetDir);
+        console.log(`Файлов сессии скопировано: ${files.length}`);
+    }
 
     // Копируем сессию в /tmp (там разрешена запись)
     if (fs.existsSync(sourceDir)) {
@@ -99,17 +110,22 @@ async function runBot(imname) {
         browser = await puppeteer.launch(options);
 
         page = await browser.newPage();
-        await page.goto('https://delivery-os.wolt.com/couriers', { 
-        waitUntil: 'networkidle0', 
-        timeout: 15000 
-        });
+        
+        // ВОТ ТУТ МАГИЯ: ПОДСТАВЛЯЕМ КУКИ ИЗ НАСТРОЕК VERCEL
+        if (process.env.WOLT_COOKIES) {
+            const cookies = JSON.parse(process.env.WOLT_COOKIES);
+            await page.setCookie(...cookies);
+            console.log("Куки успешно загружены из переменных окружения");
+        }
+
+        await page.goto('https://delivery-os.wolt.com/couriers', { waitUntil: 'networkidle0' });
+
         // Ждем, пока внутри tbody появится хотя бы одна строка с текстом
         await page.waitForFunction(() => {
             const tbody = document.querySelector('tbody');
             return tbody && tbody.innerText.length > 10;
         }, { timeout: 30000 });
         let names = await page.$$eval('tbody > tr > td:nth-child(2) > div > div > div:nth-child(1)', e => {return e.map((el) => el.innerText)});
-        console.log(names)
         let count = 0
         let page_max_string = await page.$eval('footer > div > div > button:nth-child(2)', e => e.getAttribute('title'))
         let page_max_num = Number(page_max_string.slice(10))
