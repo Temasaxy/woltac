@@ -95,10 +95,10 @@ async function runBot(imname) {
 
         browser = await puppeteer.launch(options);
 
-        const page = await browser.newPage();
+        page = await browser.newPage();
         await page.goto('https://delivery-os.wolt.com/couriers', { waitUntil: 'networkidle2' });
         await page.waitForSelector('.cb_DataTable_Row_2be', {timeout:15000})
-        names = await page.$$eval('.cb_DataTable_Row_2be > .cb_DataTable_Column_2be:nth-child(2) > div > div > div:nth-child(1)', e => {return e.map((el) => el.innerText)});
+        let names = await page.$$eval('.cb_DataTable_Row_2be > .cb_DataTable_Column_2be:nth-child(2) > div > div > div:nth-child(1)', e => {return e.map((el) => el.innerText)});
         let count = 0
         let page_max_string = await page.$eval('footer > div > div > button:nth-child(2)', e => e.getAttribute('title'))
         let page_max_num = Number(page_max_string.slice(10))
@@ -130,8 +130,20 @@ async function runBot(imname) {
         return [count_delivery, data_c, imname]
 
     } catch (error) {
-        console.log(await page.content())
-        console.error('Ошибка бота:', error);
+        // --- ИСПРАВЛЕННЫЙ БЛОК CATCH ---
+        console.error('ПРОИЗОШЛА ОШИБКА:', error.message);
+        
+        if (page) {
+            try {
+                const currentUrl = page.url();
+                console.log("Страница в момент ошибки:", currentUrl);
+                const content = await page.content();
+                console.log("HTML (первые 1000 символов):", content.substring(0, 1000));
+            } catch (err) {
+                console.log("Не удалось получить данные со страницы:", err.message);
+            }
+        }
+
         if (browser) await browser.close();
         return ['error', 'error', 'error'];
     }
