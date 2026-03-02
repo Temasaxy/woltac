@@ -101,10 +101,13 @@ async function runBot(imname) {
         page = await browser.newPage();
         await page.goto('https://delivery-os.wolt.com/couriers', { 
         waitUntil: 'networkidle0', 
-        timeout: 60000 
+        timeout: 15000 
         });
-        
-        await page.waitForSelector('tbody', {timeout:30000})
+        // Ждем, пока внутри tbody появится хотя бы одна строка с текстом
+        await page.waitForFunction(() => {
+            const tbody = document.querySelector('tbody');
+            return tbody && tbody.innerText.length > 10;
+        }, { timeout: 30000 });
         let names = await page.$$eval('tbody > tr > td:nth-child(2) > div > div', e => {return e.map((el) => el.innerText)});
         let count = 0
         let page_max_string = await page.$eval('footer > div > div > button:nth-child(2)', e => e.getAttribute('title'))
