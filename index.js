@@ -87,7 +87,7 @@ async function runBot(imname) {
             executablePath: isVercel 
                 ? await chromium.executablePath() 
                 : 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', 
-            headless: isVercel ? chromium.headless : false, // Дома лучше false, чтобы видеть окно
+            headless: isVercel ? chromium.headless : true, // Дома лучше false, чтобы видеть окно
             userDataDir: targetDir,
         };
 
