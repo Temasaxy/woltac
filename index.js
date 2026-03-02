@@ -108,7 +108,8 @@ async function runBot(imname) {
             const tbody = document.querySelector('tbody');
             return tbody && tbody.innerText.length > 10;
         }, { timeout: 30000 });
-        let names = await page.$$eval('tbody > tr > td:nth-child(2) > div > div', e => {return e.map((el) => el.innerText)});
+        let names = await page.$$eval('tbody > tr > td:nth-child(2) > div > div > div:nth-child(1)', e => {return e.map((el) => el.innerText)});
+        console.log(names)
         let count = 0
         let page_max_string = await page.$eval('footer > div > div > button:nth-child(2)', e => e.getAttribute('title'))
         let page_max_num = Number(page_max_string.slice(10))
