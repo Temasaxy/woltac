@@ -1,5 +1,13 @@
 import express from 'express';
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
+import chromium from '@sparticuz/chromium'; 
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs-extra';
+import os from 'os';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 let db = new Map
 const app = express()
@@ -51,35 +59,43 @@ app.post('/cleardata',function (req, res) {
     res.render('index', dataForRender);
     }
 })
-let port = 3001
+const port = process.env.PORT || 3000;
 app.listen(port, () => {
-    console.log(`Server connect: http://localhost:${port}`)
-    console.log(db)
-})
-
+    console.log(`Server connect: http://localhost:${port}`);
+});
 async function runBot(imname) {
-    if(imname == ''){
-        return ['error', 'error', 'error']
+    if (!imname) return ['error', 'error', 'error'];
+
+    // ЛОГИКА СЕССИИ ДЛЯ VERCEL
+    const sourceDir = path.join(__dirname, 'my_bot_session');
+    const targetDir = path.join(os.tmpdir(), 'browser_session');
+
+    // Копируем сессию в /tmp (там разрешена запись)
+    if (fs.existsSync(sourceDir)) {
+        await fs.copy(sourceDir, targetDir);
     }
-    const botDataDir ='C:\\Users\\админ\\Desktop\\Full Stack\\node js експрес\\work-admin\\my_bot_session'
-    const browser = await puppeteer.launch({
-        userDataDir: botDataDir,
-        headless: true,
-        executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-        args: [
-        '--window-size=1920,1080',
-        '--disable-blink-features=AutomationControlled',
-        '--no-sandbox',
-    ]
-    });
-    const page = await browser.newPage();
-    await page.goto('https://delivery-os.wolt.com/couriers');
-    await page.waitForSelector('.cb_DataTable_Row_2be', {timeout:15000})
-    let names = await page.$$eval('.cb_DataTable_Row_2be > .cb_DataTable_Column_2be:nth-child(2) > div > div > div:nth-child(1)', e => {return e.map((el) => el.innerText)});
-    let count = 0
-    let page_max_string = await page.$eval('footer > div > div > button:nth-child(2)', e => e.getAttribute('title'))
-    let page_max_num = Number(page_max_string.slice(10))
-    while (!(names.includes(imname))){
+
+    let browser;
+    try {
+        browser = await puppeteer.launch({
+            args: chromium.args,
+            defaultViewport: chromium.defaultViewport,
+            executablePath: await chromium.executablePath(), // Авто-путь на Vercel
+            headless: chromium.headless,
+            userDataDir: targetDir, // Работаем с копией в /tmp
+        });
+
+        const page = await browser.newPage();
+        await page.goto('https://delivery-os.wolt.com/couriers', { waitUntil: 'networkidle2' });
+        
+        // Твоя логика парсинга (оставляем как есть)
+        await page.waitForSelector('.cb_DataTable_Row_2be', { timeout: 15000 });
+        
+        let names = await page.$$eval('.cb_DataTable_Row_2be > .cb_DataTable_Column_2be:nth-child(2) > div > div > div:nth-child(1)', e => {return e.map((el) => el.innerText)});
+        let count = 0
+        let page_max_string = await page.$eval('footer > div > div > button:nth-child(2)', e => e.getAttribute('title'))
+        let page_max_num = Number(page_max_string.slice(10))
+        while (!(names.includes(imname))){
         await page.click('footer > div > div > button[title="Next page"]')
         count += 1
         await page.waitForSelector('.cb_DataTable_Row_2be', {timeout:15000})
@@ -87,24 +103,30 @@ async function runBot(imname) {
         if(count == page_max_num){
             await browser.close()
             return ['error', 'error', 'error']
+        }
+        }
+        await page.click(`.cb_DataTable_Row_2be:nth-child(${names.indexOf(imname) + 1})`,
+        {
+        button: 'left',
+        delay: 100,
+        })
+        await new Promise(r => setTimeout(r, 2000));
+        let data_c = await page.$eval('.cb_ModalContent_Root_954 > div > section[aria-label="Details"] > ul >  li:nth-child(5) > div:nth-child(2)', e => e.innerText)
+        await page.click('section[aria-label="Basic information"]>div:nth-child(2)>div:nth-child(4)>button')
+        await page.click('button[role="menuitem"]')
+        await new Promise(r => setTimeout(r, 2000)) 
+        await page.click('div[role="presentation"]:nth-child(2)')
+        await new Promise(r => setTimeout(r, 2000))
+        let count_delivery = await page.$eval('li[role="listitem"] > div > ul > li:nth-child(4) > div:nth-child(1)', e => e.innerText)
+        await page.click('div[role="group"]>div>a[title="All couriers"]')
+        await new Promise(r => setTimeout(r, 2000)) 
+        await browser.close()
+        db.set(imname, [count_delivery, data_c])
+        return [count_delivery, data_c, imname]
+
+    } catch (error) {
+        console.error('Ошибка бота:', error);
+        if (browser) await browser.close();
+        return ['error', 'error', 'error'];
     }
-    }
-    await page.click(`.cb_DataTable_Row_2be:nth-child(${names.indexOf(imname) + 1})`,
-    {
-    button: 'left',
-    delay: 100,
-    })
-    await new Promise(r => setTimeout(r, 2000));
-    let data_c = await page.$eval('.cb_ModalContent_Root_954 > div > section[aria-label="Details"] > ul >  li:nth-child(5) > div:nth-child(2)', e => e.innerText)
-    await page.click('section[aria-label="Basic information"]>div:nth-child(2)>div:nth-child(4)>button')
-    await page.click('button[role="menuitem"]')
-    await new Promise(r => setTimeout(r, 2000)) 
-    await page.click('div[role="presentation"]:nth-child(2)')
-    await new Promise(r => setTimeout(r, 2000))
-    let count_delivery = await page.$eval('li[role="listitem"] > div > ul > li:nth-child(4) > div:nth-child(1)', e => e.innerText)
-    await page.click('div[role="group"]>div>a[title="All couriers"]')
-    await new Promise(r => setTimeout(r, 2000)) 
-    await browser.close()
-    db.set(imname, [count_delivery, data_c])
-    return [count_delivery, data_c, imname]
-};
+}
