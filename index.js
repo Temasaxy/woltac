@@ -97,8 +97,8 @@ async function runBot(imname) {
 
         page = await browser.newPage();
         await page.goto('https://delivery-os.wolt.com/couriers', { waitUntil: 'networkidle2' });
-        await page.waitForSelector('.cb_DataTable_Row_2be', {timeout:15000})
-        let names = await page.$$eval('.cb_DataTable_Row_2be > .cb_DataTable_Column_2be:nth-child(2) > div > div > div:nth-child(1)', e => {return e.map((el) => el.innerText)});
+        await page.waitForSelector('tbody', {timeout:30000})
+        let names = await page.$$eval('tbody > tr > td:nth-child(2) > div > div', e => {return e.map((el) => el.innerText)});
         let count = 0
         let page_max_string = await page.$eval('footer > div > div > button:nth-child(2)', e => e.getAttribute('title'))
         let page_max_num = Number(page_max_string.slice(10))
@@ -110,7 +110,7 @@ async function runBot(imname) {
             return ['error', 'error', 'error']
         }
         }
-        await page.click(`.cb_DataTable_Row_2be:nth-child(${names.indexOf(imname) + 1})`,
+        await page.click(`tbody > tr:nth-child(${names.indexOf(imname) + 1})`,
         {
         button: 'left',
         delay: 100,
