@@ -3,14 +3,7 @@ import puppeteer from 'puppeteer-core';
 import chromium from '@sparticuz/chromium'; 
 import path from 'path';
 import { fileURLToPath } from 'url';
-import fs from 'fs-extra';
 import os from 'os';
-import { Redis } from '@upstash/redis';
-
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN,
-});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -73,19 +66,7 @@ async function runBot(imname) {
     console.log(imname)
     if (!imname) return ['error', 'error', 'error'];
 
-    // ЛОГИКА СЕССИИ ДЛЯ VERCEL
-    const sourceDir = path.join(__dirname, 'my_bot_session');
     const targetDir = path.join(os.tmpdir(), 'browser_session');
-    if (fs.existsSync(sourceDir)) {
-        await fs.copy(sourceDir, targetDir);
-        const files = fs.readdirSync(targetDir);
-        console.log(`Файлов сессии скопировано: ${files.length}`);
-    }
-
-    // Копируем сессию в /tmp (там разрешена запись)
-    if (fs.existsSync(sourceDir)) {
-        await fs.copy(sourceDir, targetDir);
-    }
 
     let browser;
     let page;
@@ -95,16 +76,22 @@ async function runBot(imname) {
 
         const options = {
             args: isVercel ? [
-        ...chromium.args,
-        '--disable-blink-features=AutomationControlled', // Скрывает Puppeteer
-        ] : ['--no-sandbox'],
+                ...chromium.args,
+                '--disable-blink-features=AutomationControlled',
+            ] : [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-infobars',
+                '--disable-blink-features=AutomationControlled',
+            ],
+            ignoreDefaultArgs: isVercel ? [] : ['--enable-automation'], 
             defaultViewport: chromium.defaultViewport,
-            // Если на Vercel - берем путь из библиотеки, если дома - путь к твоему Chrome
             executablePath: isVercel 
                 ? await chromium.executablePath() 
                 : 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', 
-            headless: isVercel ? chromium.headless : false, // Дома лучше false, чтобы видеть окно
-            userDataDir: targetDir,
+            headless: isVercel ? chromium.headless : false,
+            // На Vercel папка не нужна, дома - используем временную
+            userDataDir: isVercel ? null : targetDir, 
         };
 
         browser = await puppeteer.launch(options);
@@ -124,7 +111,7 @@ async function runBot(imname) {
         await page.waitForFunction(() => {
             const tbody = document.querySelector('tbody');
             return tbody && tbody.innerText.length > 10;
-        }, { timeout: 30000 });
+        }, { timeout: 15000 });
         let names = await page.$$eval('tbody > tr > td:nth-child(2) > div > div > div:nth-child(1)', e => {return e.map((el) => el.innerText)});
         let count = 0
         let page_max_string = await page.$eval('footer > div > div > button:nth-child(2)', e => e.getAttribute('title'))
@@ -155,7 +142,6 @@ async function runBot(imname) {
         await browser.close()
         db.set(imname, [count_delivery, data_c])
         return [count_delivery, data_c, imname]
-
     } catch (error) {
         // --- ИСПРАВЛЕННЫЙ БЛОК CATCH ---
         console.error('ПРОИЗОШЛА ОШИБКА:', error.message);
