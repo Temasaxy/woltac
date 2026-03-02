@@ -96,21 +96,15 @@ async function runBot(imname) {
 
         const page = await browser.newPage();
         await page.goto('https://delivery-os.wolt.com/couriers', { waitUntil: 'networkidle2' });
-        
-        // Твоя логика парсинга (оставляем как есть)
-        await page.waitForSelector('.cb_DataTable_Row_2be', { timeout: 30000 });
-        
-        let names = await page.$$eval('.cb_DataTable_Row_2be > .cb_DataTable_Column_2be:nth-child(2) > div > div > div:nth-child(1)', e => {return e.map((el) => el.innerText)});
-        console.log(names)
+        await page.waitForSelector('.cb_DataTable_Row_2be', {timeout:15000})
+        names = await page.$$eval('.cb_DataTable_Row_2be > .cb_DataTable_Column_2be:nth-child(2) > div > div > div:nth-child(1)', e => {return e.map((el) => el.innerText)});
         let count = 0
         let page_max_string = await page.$eval('footer > div > div > button:nth-child(2)', e => e.getAttribute('title'))
         let page_max_num = Number(page_max_string.slice(10))
         while (!(names.includes(imname))){
-        await page.click('footer > div > div > button[title="Next page"]')
-        count += 1
-        await page.waitForSelector('.cb_DataTable_Row_2be', {timeout:15000})
-        names = await page.$$eval('.cb_DataTable_Row_2be > .cb_DataTable_Column_2be:nth-child(2) > div > div > div:nth-child(1)', e => {return e.map((el) => el.innerText)});
-        if(count == page_max_num){
+         await page.click('footer > div > div > button[title="Next page"]')
+         count += 1
+         if(count == page_max_num){
             await browser.close()
             return ['error', 'error', 'error']
         }
