@@ -75,6 +75,19 @@
     background-color: rgb(85, 223, 110);
     scale: calc(1.08);
 }
+.btn-row2{
+    width: 150px;
+    height: 50px;
+    margin: 40px;
+    border: none;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow';
+    border-radius: 999px;
+    transition: 0.3s;
+}
+.btn-row2:hover{
+    background-color: rgb(232, 45, 24);
+    scale: calc(1.08);
+}
 .p1{
     color: red;
 }

@@ -1,9 +1,7 @@
 import express from 'express';
-import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium'; 
+import puppeteer from 'puppeteer';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import os from 'os';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,51 +61,31 @@ app.listen(port, () => {
     console.log(`Server connect: http://localhost:${port}`);
 });
 async function runBot(imname) {
-    console.log(imname)
     if (!imname) return ['error', 'error', 'error'];
 
-    const targetDir = path.join(os.tmpdir(), 'browser_session');
+    const targetDir = path.join(__dirname, 'wolt-data');
 
     let browser;
     let page;
     try {
-        // Проверяем, запущен ли код на сервере Vercel
-        const isVercel = process.env.VERCEL;
-
         const options = {
-            args: isVercel ? [
-                ...chromium.args,
-                '--disable-blink-features=AutomationControlled',
-            ] : [
+            args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-infobars',
                 '--disable-blink-features=AutomationControlled',
             ],
-            ignoreDefaultArgs: isVercel ? [] : ['--enable-automation'], 
-            defaultViewport: chromium.defaultViewport,
-            executablePath: isVercel 
-                ? await chromium.executablePath() 
-                : 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', 
-            headless: isVercel ? chromium.headless : false,
-            // На Vercel папка не нужна, дома - используем временную
-            userDataDir: isVercel ? null : targetDir, 
+            executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', 
+            headless: false,
+            userDataDir: targetDir, 
         };
 
         browser = await puppeteer.launch(options);
 
         page = await browser.newPage();
-        
-        // ВОТ ТУТ МАГИЯ: ПОДСТАВЛЯЕМ КУКИ ИЗ НАСТРОЕК VERCEL
-        if (process.env.WOLT_COOKIES) {
-            const cookies = JSON.parse(process.env.WOLT_COOKIES);
-            await page.setCookie(...cookies);
-            console.log("Куки успешно загружены из переменных окружения");
-        }
 
-        await page.goto('https://delivery-os.wolt.com/couriers', { waitUntil: 'networkidle0' });
+        await page.goto('https://delivery-os.wolt.com/couriers');
 
-        // Ждем, пока внутри tbody появится хотя бы одна строка с текстом
         await page.waitForFunction(() => {
             const tbody = document.querySelector('tbody');
             return tbody && tbody.innerText.length > 10;
@@ -143,20 +121,7 @@ async function runBot(imname) {
         db.set(imname, [count_delivery, data_c])
         return [count_delivery, data_c, imname]
     } catch (error) {
-        // --- ИСПРАВЛЕННЫЙ БЛОК CATCH ---
         console.error('ПРОИЗОШЛА ОШИБКА:', error.message);
-        
-        if (page) {
-            try {
-                const currentUrl = page.url();
-                console.log("Страница в момент ошибки:", currentUrl);
-                const content = await page.content();
-                console.log("HTML (первые 1000 символов):", content.substring(0, 1000));
-            } catch (err) {
-                console.log("Не удалось получить данные со страницы:", err.message);
-            }
-        }
-
         if (browser) await browser.close();
         return ['error', 'error', 'error'];
     }
